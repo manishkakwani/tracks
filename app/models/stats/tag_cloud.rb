@@ -3,9 +3,9 @@ class TagCloud
   # http://www.juixe.com/techknow/index.php/2006/07/15/acts-as-taggable-tag-cloud/
 
 	attr_reader :user, :tags, :min, :divisor,
-							:for_cloud_90days, :min_90days, :divisor_90days
+							:for_cloud, :min, :divisor
 
-	def initialize(user, cut_off)
+	def initialize(user, cut_off = nil)
 		@user = user
 		@cut_off = cut_off
 	end
@@ -13,7 +13,10 @@ class TagCloud
 	def compute
     levels=10
     # TODO: parameterize limit
-    params = [sql, user.id]
+    params = [sql(@cut_off), user.id]
+    if @cut_off
+    	params += [@cut_off, @cut_off]
+    end
     @tags = Tag.find_by_sql(params).sort_by { |tag| tag.name.downcase }
 
     max, @min = 0, 0
@@ -24,16 +27,19 @@ class TagCloud
 
     @divisor = ((max - @min) / levels) + 1
 
-    params = [sql(@cut_off), user.id, @cut_off, @cut_off]
-    @for_cloud_90days = Tag.find_by_sql(params).sort_by { |tag| tag.name.downcase }
+    params = [sql(@cut_off), user.id]
+    if @cut_off
+    	params += [@cut_off, @cut_off]
+    end
+    @for_cloud = Tag.find_by_sql(params).sort_by { |tag| tag.name.downcase }
 
-    max_90days, @min_90days = 0, 0
-    @for_cloud_90days.each { |t|
-      max_90days = [t.count.to_i, max_90days].max
-      @min_90days = [t.count.to_i, @min_90days].min
+    max, @min = 0, 0
+    @for_cloud.each { |t|
+      max = [t.count.to_i, max].max
+      @min = [t.count.to_i, @min].min
     }
 
-    @divisor_90days = ((max_90days - @min_90days) / levels) + 1
+    @divisor = ((max - @min) / levels) + 1
 	end
 
 	private
