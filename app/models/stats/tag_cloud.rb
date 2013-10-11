@@ -2,8 +2,7 @@ class TagCloud
   # tag cloud code inspired by this article
   # http://www.juixe.com/techknow/index.php/2006/07/15/acts-as-taggable-tag-cloud/
 
-	attr_reader :user, :min, :divisor,
-							:for_cloud, :min, :divisor
+	attr_reader :user, :for_cloud
 
 	def initialize(user, cut_off = nil)
 		@user = user
@@ -31,29 +30,13 @@ class TagCloud
 		Tag.find_by_sql(params).sort_by { |tag| tag.name.downcase }
   end
 
-	def compute
-    max, @min = 0, 0
-    tags.each { |t|
-      max = [t.count.to_i, max].max
-      @min = [t.count.to_i, @min].min
-    }
+  def min
+  	0
+  end
 
-    @divisor = ((max - @min) / levels) + 1
-
-    params = [sql(@cut_off), user.id]
-    if @cut_off
-    	params += [@cut_off, @cut_off]
-    end
-    @for_cloud = Tag.find_by_sql(params).sort_by { |tag| tag.name.downcase }
-
-    max, @min = 0, 0
-    @for_cloud.each { |t|
-      max = [t.count.to_i, max].max
-      @min = [t.count.to_i, @min].min
-    }
-
-    @divisor = ((max - @min) / levels) + 1
-	end
+  def divisor
+  	@divisor ||= ((max - min) / levels) + 1
+  end
 
 	private
     # TODO: parameterize limit
@@ -75,5 +58,13 @@ class TagCloud
 
 	  def levels
 	  	10
+	  end
+
+	  def tag_counts
+	  	@tag_counts ||= tags.map {|t| t.count.to_i}
+	  end
+
+	  def max
+	  	tag_counts.max
 	  end
 end
