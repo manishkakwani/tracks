@@ -30,13 +30,9 @@ class TagCloud
 		Tag.find_by_sql(params).sort_by { |tag| tag.name.downcase }
   end
 
-  def min
-  	0
-  end
-
-  def divisor
-  	@divisor ||= ((max - min) / levels) + 1
-  end
+  def relative_size(tag)
+	  (tag.count.to_i - min) / divisor
+	end
 
 	private
     # TODO: parameterize limit
@@ -66,5 +62,13 @@ class TagCloud
 
 	  def max
 	  	tag_counts.max
+	  end
+
+	  def min
+	  	0
+	  end
+
+	  def divisor
+	  	@divisor ||= ((max - min) / levels) + 1
 	  end
 end
